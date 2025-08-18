@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en" style="height: 100%;">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patients</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+        }
+
+        .full-height {
+            min-height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .content {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .table {
+            border-collapse: separate;
+            border-spacing: 0;
+            border: 1px solid #dee2e6;
+            border-radius: 0.5rem;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .table thead {
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .table thead th {
+            background-color: #f1f3f5;
+            padding: 1.25rem;
+            font-weight: 600;
+            color: #495057;
+            text-transform: uppercase;
+            font-size: 0.875rem;
+            letter-spacing: 0.5px;
+        }
+
+        .table tbody td {
+            border: none;
+            padding: 1.25rem;
+            background-color: white;
+            transition: background-color 0.2s ease;
+        }
+
+        .table tbody tr {
+            transition: all 0.2s ease;
+        }
+
+        .table tbody tr:hover {
+            background-color: #e9ecef;
+            cursor: pointer;
+        }
+
+        .table tbody tr:hover td {
+            background-color: #e9ecef;
+        }
+
+        .table tbody tr {
+            border-bottom: 1px solid #f8f9fa;
+        }
+
+        .table tbody tr:last-child {
+            border-bottom: none;
+        }
+
+        .table tbody tr:hover {
+            background-color: #e9ecef;
+            color: #212529;
+            transition: background-color 0.2s ease;
+        }
+
+        .table tbody td:first-child {
+            font-weight: 500;
+        }
+
+        .search-container {
+            margin-bottom: 2rem;
+            margin-right: 1rem;
+        }
+
+        .search-container .form-control {
+            border-radius: 0.5rem 0 0 0.5rem;
+            padding: 0.75rem 1rem;
+            border: 1px solid #dee2e6;
+            transition: all 0.2s ease;
+        }
+
+        .search-container .btn-outline-secondary {
+            border-radius: 0 0.5rem 0.5rem 0;
+            border: 1px solid #dee2e6;
+            padding: 0.75rem 1rem;
+            background-color: transparent;
+            color: #6c757d;
+            transition: all 0.2s ease;
+        }
+
+        .search-container .btn-outline-secondary:hover {
+            background-color: #f8f9fa;
+            color: #495057;
+        }
+
+        .search-container .btn-outline-secondary svg {
+            width: 1rem;
+            height: 1rem;
+        }
+
+        .search-container .form-control:focus {
+            border-color: #6c63ff;
+            box-shadow: 0 0 0 0.25rem rgba(108, 99, 255, 0.25);
+            outline: none;
+        }
+
+        .search-container .btn-primary {
+            border-radius: 0.5rem;
+            padding: 0.5rem 1.5rem;
+        }
+
+        .search-container .btn-primary:hover {
+            background-color: #5952d4;
+        }
+
+        .table-responsive {
+            border-radius: 0.5rem;
+            overflow: hidden;
+            background: white;
+        }
+    </style>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const dateInput = document.querySelector('#addRecordModal input[name="visit_date"]');
+            if (dateInput) {
+                const today = new Date().toISOString().split('T')[0];
+                dateInput.value = today;
+            }
+        });
+    </script>
+
+</head>
+
+<body>
+    <div class="container py-3">
+
+        <!-- Modal -->
+        <div class="modal fade" id="signatureModal" tabindex="-1" aria-labelledby="signatureModalLabel"
+            aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="signatureModalLabel">Edit Signature Information</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form method="POST" action="{{ url_for('update_signatures') }}"
+                            class="row g-2 align-items-center">
+                            <div class="col-md-6">Lic. No:
+                                <input type="text" name="lic_no" class="form-control form-control-sm"
+                                    value="{{ signature_info['lic_no'] if signature_info else '' }}"
+                                    placeholder="e.g. 123456">
+                            </div>
+                            <div class="col-md-6">
+                                PTR No:
+                                <input type="text" name="ptr_no" class="form-control form-control-sm"
+                                    value="{{ signature_info['ptr_no'] if signature_info else '' }}"
+                                    placeholder=" e.g. 123456">
+                            </div>
+                            <div class="col-md-6">
+                                TIN No:
+                                <input type="text" name="tin_no" class="form-control form-control-sm"
+                                    value="{{ signature_info['tin_no'] if signature_info else '' }}"
+                                    placeholder=" e.g. 123-456-789">
+                            </div>
+                            <div class="col-md-6">
+                                S2 No:
+                                <input type="text" name="s2_no" class="form-control form-control-sm"
+                                    value="{{ signature_info['s2_no'] if signature_info else '' }}"
+                                    placeholder="e.g. 123456">
+                            </div>
+                            <div class="col-12 mt-3">
+                                <button type="submit" class="btn btn-primary btn-sm">Save</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+            <h4 class="mb-0">Patient Records</h4>
+            <div class="flex-grow-1">
+                <form method="get" action="/" class="input-group">
+                    <input type="text" name="search" value="{{ request.args.get('search', '') }}" class="form-control"
+                        placeholder="Search patients...">
+                    <button class="btn btn-outline-secondary" type="submit">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </button>
+                </form>
+            </div>
+            <button id="addPatientBtn" class="btn btn-primary">Add Patient</button>
+            <!-- Three-dot menu trigger -->
+            <div class="dropdown">
+                <button class="btn btn-md btn-light" type="button" id="signatureMenu" data-bs-toggle="dropdown"
+                    aria-expanded="false">
+                    &#x22EE;
+                </button>
+                <ul class="dropdown-menu" aria-labelledby="signatureMenu">
+                    <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#signatureModal">Edit
+                            Signature</a></li>
+                </ul>
+            </div>
+
+        </div>
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>First Name</th>
+                        <th>Last Name</th>
+                        <th>Age</th>
+                        <th>Last Visit</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in patients %}
+                    <tr onclick='window.location="{{ url_for("view_patient", patient_id=p["id"]) }}"'>
+                        <td>{{ p['first_name'] }}</td>
+                        <td>{{ p['last_name'] }}</td>
+                        <td>{{ p['age'] }}</td>
+                        <td>{{ p['last_visit']|format_date if p['last_visit'] else 'No visits' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Modal -->
+        <div class="modal fade" id="patientModal" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <form method="post" action="/add" id="patientForm">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="patientModalLabel">Add Patient</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label for="first_name" class="form-label">First Name</label>
+                                    <input name="first_name" class="form-control" id="first_name" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="last_name" class="form-label">Last Name</label>
+                                    <input name="last_name" class="form-control" id="last_name" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="middle_initial" class="form-label">M.I.</label>
+                                    <input name="middle_initial" class="form-control" id="middle_initial">
+                                </div>
+                                <div class="col-md-2">
+                                    <label for="age" class="form-label">Age</label>
+                                    <input name="age" type="number" class="form-control" id="age">
+                                </div>
+                                <div class="col-md-2">
+                                    <label for="sex" class="form-label">Sex</label>
+                                    <select name="sex" class="form-select" id="sex">
+                                        <option value=""></option>
+                                        <option value="male">Male</option>
+                                        <option value="female">Female</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Barangay</label>
+                                    <input type="text" class="form-control" name="barangay">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">City / Municipality</label>
+                                    <input type="text" class="form-control" name="city">
+                                </div>
+
+                                <div class="col-12">
+                                    <label for="emergency_contact" class="form-label">Emergency Contact</label>
+                                    <input name="emergency_contact" class="form-control" id="emergency_contact">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <button type="submit" class="btn btn-primary">Save</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+        <script>
+            const modal = new bootstrap.Modal(document.getElementById('patientModal'));
+            document.getElementById('addPatientBtn').addEventListener('click', function () {
+                modal.show();
+            });
+        </script>
+</body>
+
+</html>

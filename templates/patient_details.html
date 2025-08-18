@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="en" style="height: 100%;">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient Details</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            font-size: 12pt;
+            height: auto;
+            box-sizing: border-box;
+        }
+
+        .full-height {
+            height: 100%;
+        }
+
+        .scrollable-container {
+            flex: 1 1 auto;
+            min-height: 0;
+            overflow-y: auto;
+            padding-right: 10px;
+            margin-top: 1rem;
+            display: flex;
+            flex-direction: column;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // ---------- helper: fetch signature from backend ----------
+        async function fetchSignatureData() {
+            try {
+                const res = await fetch('/api/signature');
+                if (!res.ok) throw new Error('Failed to fetch signature data');
+                return await res.json();
+            } catch (err) {
+                console.error('fetchSignatureData error:', err);
+                return { lic_no: '', ptr_no: '', tin_no: '', s2_no: '' };
+            }
+        }
+
+        function printDiv(divId) {
+            var originalContents = document.body.innerHTML;
+
+            var printContents = document.getElementById(divId).innerHTML;
+
+            document.body.innerHTML = printContents;
+
+            window.print();
+
+            document.body.innerHTML = originalContents;
+
+            location.reload();
+        }
+
+        // ---------- patient / visit modal helpers (unchanged) ----------
+        function setupEditPatientModal(patient) {
+            const form = document.getElementById('patientForm');
+            form.action = `/edit/${patient['id']}`;
+            document.getElementById('addPatientModalLabel').innerText = "Edit Patient";
+
+            form.querySelector('[name="first_name"]').value = patient['first_name'];
+            form.querySelector('[name="last_name"]').value = patient['last_name'];
+            form.querySelector('[name="middle_initial"]').value = patient['middle_initial'];
+            form.querySelector('[name="age"]').value = patient['age'];
+            form.querySelector('[name="sex"]').value = patient['sex'];
+            form.querySelector('[name="barangay"]').value = patient['barangay'];
+            form.querySelector('[name="city"]').value = patient['city'];
+            form.querySelector('[name="emergency_contact"]').value = patient['emergency_contact'];
+            if (form.querySelector('[name="medical_history"]')) {
+                form.querySelector('[name="medical_history"]').value = patient['medical_history'];
+            }
+            form.querySelector('[name="patient_id"]').value = patient['id'];
+
+            new bootstrap.Modal(document.getElementById('addPatientModal')).show();
+        }
+
+        function editPatientMedicalHistory(patient_id) {
+            const modal = document.getElementById('medicalHistoryModal');
+            const medicalHistory = document.querySelector('.card-body.text-muted')?.textContent?.trim() || "";
+            modal.querySelector('textarea[name="medical_history"]').value = medicalHistory;
+            modal.querySelector('input[name="patient_id"]').value = patient_id;
+            new bootstrap.Modal(modal).show();
+        }
+
+        function setupEditVisitModal(visitId) {
+            const form = document.getElementById('visitForm');
+            if (!form) return;
+            form.action = `/edit_record/${visitId}`;
+            document.getElementById('visit_id').value = visitId;
+            // patient id inserted as Jinja value when page renders
+            document.getElementById('patient_id').value = `{{ patient['id'] }}`;
+
+            const row = document.querySelector(`[data-visit-id="${visitId}"]`);
+            const dateBtn = row.querySelector('.visit-date');
+            const dateRaw = dateBtn?.dataset.date;
+            const notes = row.querySelector('.visit-notes')?.textContent?.trim();
+            let formattedDate = '';
+
+            if (dateRaw) {
+                const dateObj = new Date(dateRaw);
+                if (!isNaN(dateObj)) formattedDate = dateObj.toISOString().split('T')[0];
+            }
+
+            document.getElementById('visit_date').value = formattedDate;
+            document.getElementById('notes').value = notes || '';
+
+            new bootstrap.Modal(document.getElementById('visitModal')).show();
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const dateInput = document.querySelector('#addRecordModal input[name="visit_date"]');
+            if (dateInput) dateInput.value = new Date().toISOString().split('T')[0];
+        });
+
+        function toggleNotes(visitId) {
+            const visitCard = document.querySelector(`[data-visit-id="${visitId}"]`);
+            if (!visitCard) return;
+            const notesEl = visitCard.querySelector('.visit-notes');
+            const dateBtn = visitCard.querySelector('.visit-date');
+            if (!notesEl || !dateBtn) return;
+            const isHidden = getComputedStyle(notesEl).display === 'none';
+            notesEl.style.display = isHidden ? 'block' : 'none';
+            const icon = dateBtn.querySelector('svg');
+            if (icon) icon.style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0deg)';
+            dateBtn.classList.toggle('text-primary', isHidden);
+        }
+        window.toggleNotes = toggleNotes;
+
+        // ---------- templates used for modal/document rendering ----------
+        let currentDocType = "";
+
+        const headerTemplate = `
+      <div style="text-align:center;">
+        <p style="font-size:16pt;font-family:'Times New Roman'; margin-bottom:0;"><strong>JULES I. CORTES, M.D.</strong></p>
+        <p style="font-size:11pt; margin:0;"><strong>FAMILY MEDICINE</strong></p>
+        <p style="margin:0;">Sitio Carnation, Casili, Consolacion</p>
+        <p style="margin-top:0;">(across Grand Terrace Heights Subd.)<br> Mondays–Saturdays: 7:30pm–9:00pm</p>
+      </div>
+    `;
+
+        // footerTemplate is used in the modal view (prefilled by Jinja if available)
+        const footerTemplate = `
+        <div style="margin-left:auto;">
+            <div style="text-align:left;">
+                <p style="margin-bottom:2px;"><strong>Jules I. Cortes</strong></p>
+                
+                <div style="display:flex; align-items:center; gap:6px;">
+                    <p style="margin:0;">Lic. No:</p>
+                    <input type="text" id="field9" class="form-control" 
+                        style="width:90px;font-size:9pt;height:24px;padding:2px;"
+                        value="{{ signature_info['lic_no'] if signature_info else '' }}">
+                </div>
+
+                <div style="display:flex; align-items:center; gap:6px;">
+                    <p style="margin:0;">PTR No:</p>
+                    <input type="text" id="field10" class="form-control" 
+                        style="width:90px;font-size:9pt;height:24px;padding:2px;"
+                        value="{{ signature_info['ptr_no'] if signature_info else '' }}">
+                </div>
+
+                <div style="display:flex; align-items:center; gap:6px;">
+                    <p style="margin:0;">TIN No:</p>
+                    <input type="text" id="field11" class="form-control" 
+                        style="width:90px;font-size:9pt;height:24px;padding:2px;"
+                        value="{{ signature_info['tin_no'] if signature_info else '' }}">
+                </div>
+
+                <div style="display:flex; align-items:center; gap:6px;">
+                    <p style="margin:0;">S2 No:</p>
+                    <input type="text" id="field12" class="form-control" 
+                        style="width:90px;font-size:9pt;height:24px;padding:2px;"
+                    value="{{ signature_info['s2_no'] if signature_info else '' }}">
+                </div>
+
+            </div>
+        </div>
+        `;
+
+
+
+        function openDocumentForm(type) {
+            currentDocType = type;
+            const patientData = JSON.parse('{{ patient|tojson|safe }}');
+            const patientName = `${patientData.first_name} ${patientData.last_name} ${patientData.middle_initial}`.trim();
+
+            fetch('/api/signature')
+                .then(response => response.json())
+                .then(signatureInfo => {
+                    const licNo = signatureInfo.lic_no || '';
+                    const ptrNo = signatureInfo.ptr_no || '';
+                    const tinNo = signatureInfo.tin_no || '';
+                    const s2No = signatureInfo.s2_no || '';
+
+                    // Inject values directly into inputs without touching CSS or doctor's name
+                    const updatedFooterTemplate = `
+                <div style="margin-left:auto;">
+                    <div style="text-align:left;">
+                        <p style="margin-bottom:2px;"><strong>Jules I. Cortes</strong></p>
+                        <p style="margin-bottom:2px;">Lic. No:
+                            <input type="text" id="field9" class="form-control d-inline-block" 
+                                style="width:90px;font-size:9pt;height:24px;padding:2px;"
+                                value="${licNo}">
+                        </p>
+                        <p style="margin-bottom:2px;">PTR No:
+                            <input type="text" id="field10" class="form-control d-inline-block" 
+                                style="width:90px;font-size:9pt;height:24px;padding:2px;"
+                                value="${ptrNo}">
+                        </p>
+                        <p style="margin-bottom:2px;">TIN No:
+                            <input type="text" id="field11" class="form-control d-inline-block" 
+                                style="width:90px;font-size:9pt;height:24px;padding:2px;"
+                                value="${tinNo}">
+                        </p>
+                        <p style="margin-bottom:2px;">S2 No:
+                            <input type="text" id="field12" class="form-control d-inline-block" 
+                                style="width:90px;font-size:9pt;height:24px;padding:2px;"
+                                value="${s2No}">
+                        </p>
+                    </div>
+                </div>
+            `;
+
+                    const fieldsMap = {
+                        certificate: `
+                    <div style="width:148mm;height:210mm;padding:10mm;font-family:Arial,sans-serif;font-size:9pt;box-sizing:border-box;line-height:1.3;display:flex;flex-direction:column;justify-content:space-between;">
+                        <div>
+                            ${headerTemplate}
+                            <p style="margin-bottom:4px;margin-top:50px;"><strong>TO WHOM IT MAY CONCERN:</strong></p>
+                            <p style="text-align:justify;">
+                                This is to certify that Mr./Ms./Mrs.
+                                <input type="text" id="field1" class="form-control d-inline-block" style="width:90px;font-size:9pt;height:24px;padding:2px;" value="${patientName}">
+                                <input type="number" id="field2" class="form-control d-inline-block" style="width:45px;font-size:9pt;height:24px;padding:2px;"> years old,
+                                <select id="field3" class="form-select d-inline-block" style="width:85px;font-size:9pt;height:24px;padding:2px;">
+                                    <option>single</option><option>married</option><option>widowed</option><option>widower</option>
+                                </select>
+                                and presently residing at
+                                <input type="text" id="field4" class="form-control d-inline-block" style="width:160px;font-size:9pt;height:24px;padding:2px;" placeholder="Address">
+                                consulted me at my clinic on
+                                <input type="date" id="field5" class="form-control d-inline-block" style="width:110px;font-size:9pt;height:24px;padding:2px;">
+                                and the following medical impression was/is given:
+                            </p>
+                            <p style="margin-bottom:2px;"><strong>Medical Impression:</strong></p>
+                            <textarea id="field7" class="form-control mb-2" style="font-size:9pt;height:80px;padding:4px;overflow-y:auto;resize:none;" rows="2"></textarea>
+                            <p style="margin-top:10px;">This certificate is issued upon the request of the patient but is not valid for medico-legal purposes. Thank you.</p>
+                        </div>
+                        <div style="margin-left:auto;">${updatedFooterTemplate}</div>
+                    </div>
+                `,
+                        prescription: `
+                    <div style="width:148mm;height:210mm;padding:10mm;font-family:Arial,sans-serif;font-size:9pt;box-sizing:border-box;line-height:1.3;display:flex;flex-direction:column;justify-content:space-between;">
+                        <div>
+                            ${headerTemplate}
+                            <p style="margin-bottom:4px;margin-top:50px;">Patient Name:</p>
+                            <input type="text" id="field1" class="form-control d-inline-block" style="width:100%;font-size:9pt;height:24px;padding:2px;" value="${patientName}">
+                            <p style="margin-bottom:2px;">Prescription:</p>
+                            <textarea id="field2" class="form-control d-inline-block" style="width:100%;font-size:9pt;height:80px;padding:4px;overflow-y:auto;resize:none;" rows="2"></textarea>
+                        </div>
+                        <div style="margin-left:auto;">${updatedFooterTemplate}</div>
+                    </div>
+                `,
+                        laboratory: `
+                    <div style="width:148mm;height:210mm;padding:10mm;font-family:Arial,sans-serif;font-size:9pt;box-sizing:border-box;line-height:1.3;display:flex;flex-direction:column;justify-content:space-between;">
+                        <div>
+                            ${headerTemplate}
+                            <p style="margin-top:40px;margin-bottom:4px;">Requested For:</p>
+                            <input type="text" id="field1" class="form-control d-inline-block" style="width:100%;font-size:9pt;height:24px;padding:2px;" value="${patientName}">
+                            <p style="margin-top:8px;margin-bottom:2px;">Tests:</p>
+                            <textarea id="field2" class="form-control d-inline-block" style="width:100%;font-size:9pt;height:80px;padding:4px;overflow-y:auto;resize:none;" rows="2"></textarea>
+                            <p style="margin-top:8px;margin-bottom:2px;">Purpose:</p>
+                            <textarea id="field3" class="form-control d-inline-block" style="width:100%;font-size:9pt;height:60px;padding:4px;overflow-y:auto;resize:none;" rows="2"></textarea>
+                        </div>
+                        <div style="margin-left:auto;">${updatedFooterTemplate}</div>
+                    </div>
+                `
+                    };
+
+                    document.getElementById("docModalBody").innerHTML = fieldsMap[type];
+                    new bootstrap.Modal(document.getElementById('docModal')).show();
+                })
+                .catch(error => {
+                    console.error('Error fetching signature info:', error);
+                });
+        }
+
+        // ---------- printDoc: async and builds printable HTML including signature ----------
+        async function printDoc() {
+            if (!currentDocType) {
+                alert('Please select a document type first');
+                return;
+            }
+
+            // grab field values from modal (if any)
+            const fieldValues = {
+                field1: document.getElementById('field1')?.value || '',
+                field2: document.getElementById('field2')?.value || '',
+                field3: document.getElementById('field3')?.value || '',
+                field4: document.getElementById('field4')?.value || '',
+                field5: document.getElementById('field5')?.value || '',
+                field6: document.getElementById('field6')?.value || '',
+                field7: document.getElementById('field7')?.value || '',
+                // signature inputs inside modal (may exist)
+                field9: document.getElementById('field9')?.value || '',
+                field10: document.getElementById('field10')?.value || '',
+                field11: document.getElementById('field11')?.value || '',
+                field12: document.getElementById('field12')?.value || ''
+            };
+
+            // fetch signature data from API
+            const sigData = await fetchSignatureData();
+
+            // prefer modal inputs if user typed them, otherwise fallback to DB values
+            const sig = {
+                lic_no: fieldValues.field9.trim() || (sigData.lic_no || ''),
+                ptr_no: fieldValues.field10.trim() || (sigData.ptr_no || ''),
+                tin_no: fieldValues.field11.trim() || (sigData.tin_no || ''),
+                s2_no: fieldValues.field12.trim() || (sigData.s2_no || '')
+            };
+
+            const titleMap = {
+                certificate: "Medical Certificate",
+                prescription: "Prescription",
+                laboratory: "Lab Request"
+            };
+
+            let bodyContent = '';
+            if (currentDocType === "certificate") {
+                bodyContent = `
+          <p><strong>TO WHOM IT MAY CONCERN:</strong></p>
+          <p style="text-align:justify;">
+            This is to certify that Mr./Ms./Mrs. <strong>${escapeHtml(fieldValues.field1)}</strong>,
+            <strong>${escapeHtml(fieldValues.field2)}</strong> years old, <strong>${escapeHtml(fieldValues.field3)}</strong>,
+            and presently residing at <strong>${escapeHtml(fieldValues.field4)}</strong>,
+            consulted me at my clinic on <strong>${escapeHtml(fieldValues.field5)}</strong> and the following medical impression was/is given:
+          </p>
+          <p><strong>Medical Impression:</strong></p>
+          <p>${escapeHtml(fieldValues.field6)}</p>
+          <p><strong>Remarks:</strong></p>
+          <p>${escapeHtml(fieldValues.field7)}</p>
+          <p style="margin-top:10px;">This certificate is issued upon the request of the patient but is not valid for medico-legal purposes. Thank you.</p>
+        `;
+            } else if (currentDocType === "prescription") {
+                bodyContent = `
+          <p>Patient Name: <strong>${escapeHtml(fieldValues.field1)}</strong></p>
+          <p>Prescription:</p>
+          <p>${escapeHtml(fieldValues.field2)}</p>
+        `;
+            } else if (currentDocType === "laboratory") {
+                bodyContent = `
+          <p>Requested For: <strong>${escapeHtml(fieldValues.field1)}</strong></p>
+          <p>Tests:</p>
+          <p>${escapeHtml(fieldValues.field2)}</p>
+          <p>Purpose:</p>
+          <p>${escapeHtml(fieldValues.field3)}</p>
+        `;
+            }
+
+            const footerHTML = `
+    <div style="display:flex;justify-content:flex-end;margin-top:40px;">
+        <div style="text-align:left;">
+            <p style="margin:2px 0;"><strong>Jules I. Cortes</strong></p>
+
+            <div style="display:flex; gap:6px;">
+                <p style="margin:0;">Lic. No:</p>
+                <span>${escapeHtml(sig.lic_no)}</span>
+            </div>
+
+            <div style="display:flex; gap:6px;">
+                <p style="margin:0;">PTR No:</p>
+                <span>${escapeHtml(sig.ptr_no)}</span>
+            </div>
+
+            <div style="display:flex; gap:6px;">
+                <p style="margin:0;">TIN No:</p>
+                <span>${escapeHtml(sig.tin_no)}</span>
+            </div>
+
+            <div style="display:flex; gap:6px;">
+                <p style="margin:0;">S2 No:</p>
+                <span>${escapeHtml(sig.s2_no)}</span>
+            </div>
+        </div>
+    </div>
+`;
+
+
+            const content = `
+        <div style="width:148mm;height:210mm;padding:10mm;font-family:Arial,sans-serif;font-size:10pt;box-sizing:border-box;border:1px solid #000;line-height:1.4;display:flex;flex-direction:column;justify-content:space-between;">
+          ${headerTemplate}
+          <div style="flex:1;margin-top:20px;">${bodyContent}</div>
+          ${footerHTML}
+        </div>
+      `;
+
+            const printable = `
+        <html>
+          <head>
+            <title>${titleMap[currentDocType]}</title>
+            <style>
+              @page { size: A5 portrait; margin: 0; }
+              body { margin:0; padding:0; display:flex; align-items:center; justify-content:center; }
+            </style>
+          </head>
+          <body>${content}</body>
+        </html>
+      `;
+            document.body.innerHTML = printable;
+            window.print();
+
+        }
+
+        // small SVG / text escaping helper to avoid injecting raw HTML from inputs
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+    </script>
+</head>
+
+<body>
+    <div class="container py-3 min-vh-100 d-flex flex-column">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <a href="/" class="btn btn-secondary w-20">&larr; Back</a>
+            <div class="btn-group w-20">
+                <button class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown">Print</button>
+                <ul class="dropdown-menu">
+                    <li><button class="dropdown-item" onclick="openDocumentForm('certificate')">Medical
+                            Certificate</button></li>
+                    <li><button class="dropdown-item" onclick="openDocumentForm('prescription')">Prescription</button>
+                    </li>
+                    <li><button class="dropdown-item" onclick="openDocumentForm('laboratory')">Lab Request</button></li>
+                </ul>
+            </div>
+        </div>
+        <div class="row flex-fill">
+
+            <!-- Left Column -->
+            <div class="col-md-6 d-flex flex-column">
+
+                <!-- Patient Details Card -->
+                <div class="card mb-3 shadow-sm">
+                    <div class="card-header d-flex justify-content-between align-items-center bg-light">
+                        <h5 class="mb-0">Patient Details</h5>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-sm btn-success"
+                                onclick='setupEditPatientModal({{ patient|tojson|safe }})'>Edit</button>
+                            <form method="post" action="/delete/{{ patient[0] }}"
+                                onsubmit="return confirm('Confirm delete?')">
+                                <button class="btn btn-sm btn-danger" type="submit">Delete</button>
+                            </form>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Full Name</label>
+                                <div class="form-control-plaintext">{{ patient['first_name'] }} {{ patient['last_name']
+                                    }} {{ patient['middle_initial'] }}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Age</label>
+                                <div class="form-control-plaintext">{{ patient['age'] }}</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Sex</label>
+                                <div class="form-control-plaintext">{{ patient['sex'] }}</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Barangay</label>
+                                <div class="form-control-plaintext">{{ patient['barangay'] }}</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">City</label>
+                                <div class="form-control-plaintext">{{ patient['city'] }}</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Emergency Contact</label>
+                                <div class="form-control-plaintext">{{ patient['emergency_contact'] }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Medical History Card -->
+                <div class="card mb-3 shadow-sm">
+                    <div class="card-header d-flex justify-content-between align-items-center bg-light">
+                        <strong class="mb-0">Medical History</strong>
+                        <button class="btn btn-sm btn-success" data-bs-toggle="modal"
+                            data-bs-target="#medicalHistoryModal">Edit</button>
+                    </div>
+                    <div class="card-body text-muted">
+                        {% if patient['medical_history'] %}
+                        {{ patient['medical_history'] }}
+                        {% else %}
+                        <span class="text-muted">No history recorded.</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column -->
+            <div class="col-md-6 d-flex flex-column">
+                <div class="card d-flex flex-column">
+                    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Visit History</h5>
+                        <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#addRecordModal">+
+                            Add Visit</button>
+                    </div>
+                    <div class="card-body overflow-auto" style="max-height: calc(100vh - 180px);">
+                        {% for r in records %}
+                        <div class="border rounded bg-white p-3 mb-3" data-visit-id="{{ r[0] }}">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <button class="btn btn-link fw-semibold text-start p-0 visit-date"
+                                    onclick="toggleNotes({{ r[0] }})" data-date="{{ r[1] }}">
+                                    <span class="d-flex align-items-center gap-2">
+                                        <span class="text-dark">{{ r[1]|format_date }}</span>
+                                        <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"
+                                            style="transition: transform 0.2s;">
+                                            <path fill-rule="evenodd"
+                                                d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z" />
+                                        </svg>
+                                    </span>
+                                </button>
+
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-sm btn-success"
+                                        onclick="setupEditVisitModal({{ r[0] }})">Edit</button>
+                                    <form method="post" action="/delete_record/{{ r[0] }}"
+                                        onsubmit="return confirm('Delete this record?');">
+                                        <button class="btn btn-sm btn-danger" type="submit">Delete</button>
+                                    </form>
+                                </div>
+                            </div>
+                            <div class="visit-notes small px-1 text-muted" id="notes-{{ r[0] }}"
+                                style="display: none; white-space: pre-wrap; margin: 0; line-height: 1.2; padding: 0;">
+                                {{ r[2] }}</div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Edit Patient Modal -->
+    <div class="modal fade" id="addPatientModal" tabindex="-1" aria-labelledby="addPatientModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addPatientModalLabel">Edit Patient</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form method="post" id="patientForm">
+                    <div class="modal-body">
+                        <input type="hidden" name="patient_id" />
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">First Name</label>
+                                <input type="text" class="form-control" name="first_name" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Last Name</label>
+                                <input type="text" class="form-control" name="last_name" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Middle Initial</label>
+                                <input type="text" class="form-control" name="middle_initial">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Age</label>
+                                <input type="number" class="form-control" name="age" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Sex</label>
+                                <select class="form-select" name="sex" required>
+                                    <option value="male">Male</option>
+                                    <option value="female">Female</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Barangay</label>
+                                <input type="text" class="form-control" name="barangay" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">City</label>
+                                <input type="text" class="form-control" name="city" required>
+                            </div>
+                            <div class="col-md-12">
+                                <label class="form-label">Emergency Contact</label>
+                                <input type="text" class="form-control" name="emergency_contact">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    </div>
+
+
+    <!-- Medical History Modal -->
+    <div class="modal fade" id="medicalHistoryModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <form method="post" action="/edit_medical_history/{{ patient['id'] }}">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Edit Medical History</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" name="patient_id" value="{{ patient[0] }}">
+                        <div class="mb-3">
+                            <label class="form-label">Medical History</label>
+                            <textarea name="medical_history" class="form-control"
+                                rows="10">{{ patient[10] or '' }}</textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Edit Visit Modal -->
+    <div class="modal fade" id="visitModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form method="post" id="visitForm">
+                    <input type="hidden" name="visit_id" id="visit_id">
+                    <input type="hidden" name="patient_id" id="patient_id">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Edit Visit Record</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">Visit Date</label>
+                            <input type="date" name="visit_date" id="visit_date" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">SOAP Notes</label>
+                            <textarea name="notes" id="notes" rows="4" class="form-control" required></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Add Visit Modal -->
+    <div class="modal fade" id="addRecordModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form method="post" action="/add_record/{{ patient['id'] }}">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Add Visit Record</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <label class="form-label">Visit Date</label>
+                        <input type="date" name="visit_date" class="form-control" required>
+                        <label class="form-label mt-3">SOAP Notes</label>
+                        <textarea name="notes" class="form-control" required></textarea>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary">Add Record</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Documents Modal -->
+    <div class="modal fade" id="docModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" style="max-width: min-content;">
+            <div class="modal-content" style="width: 100%;">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="docModalTitle">Document</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4" id="docModalBody" style="overflow-y: auto; max-height: calc(90vh - 120px);">
+                    <!-- Dynamic content inserted by JS -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-secondary" onclick="printDiv('docModalBody')">Print</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+
+</body>
+
+</html>
