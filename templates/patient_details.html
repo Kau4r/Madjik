@@ -72,7 +72,6 @@
             form.querySelector('[name="sex"]').value = patient['sex'];
             form.querySelector('[name="barangay"]').value = patient['barangay'];
             form.querySelector('[name="city"]').value = patient['city'];
-            form.querySelector('[name="emergency_contact"]').value = patient['emergency_contact'];
             if (form.querySelector('[name="medical_history"]')) {
                 form.querySelector('[name="medical_history"]').value = patient['medical_history'];
             }
@@ -135,6 +134,7 @@
 
         // ---------- templates used for modal/document rendering ----------
         let currentDocType = "";
+        const today = new Date().toISOString().split('T')[0];
 
         const headerTemplate = `
       <div style="text-align:center;">
@@ -143,6 +143,9 @@
         <p style="margin:0;">Sitio Carnation, Casili, Consolacion</p>
         <p style="margin-top:0;">(across Grand Terrace Heights Subd.)<br> Mondays–Saturdays: 7:30pm–9:00pm</p>
       </div>
+        <div style="text-align:right; margin-top:8px; font-size:10pt;">
+        <strong>Date: <span id="docDate">${new Date().toLocaleDateString('en-PH', { year:'numeric', month:'long', day:'numeric' })}</span></strong>
+    </div>
     `;
 
         // footerTemplate is used in the modal view (prefilled by Jinja if available)
@@ -182,8 +185,6 @@
             </div>
         </div>
         `;
-
-
 
         function openDocumentForm(type) {
             currentDocType = type;
@@ -232,7 +233,7 @@
                     <div style="width:148mm;height:210mm;padding:10mm;font-family:Arial,sans-serif;font-size:9pt;box-sizing:border-box;line-height:1.3;display:flex;flex-direction:column;justify-content:space-between;">
                         <div>
                             ${headerTemplate}
-                            <p style="margin-bottom:4px;margin-top:50px;"><strong>TO WHOM IT MAY CONCERN:</strong></p>
+                            <p style="margin-bottom:4px;margin-top:25px;"><strong>TO WHOM IT MAY CONCERN:</strong></p>
                             <p style="text-align:justify;">
                                 This is to certify that Mr./Ms./Mrs.
                                 <input type="text" id="field1" class="form-control d-inline-block" style="width:90px;font-size:9pt;height:24px;padding:2px;" value="${patientName}">
@@ -253,32 +254,51 @@
                         <div style="margin-left:auto;">${updatedFooterTemplate}</div>
                     </div>
                 `,
-                        prescription: `
-                    <div style="width:148mm;height:210mm;padding:10mm;font-family:Arial,sans-serif;font-size:9pt;box-sizing:border-box;line-height:1.3;display:flex;flex-direction:column;justify-content:space-between;">
-                        <div>
-                            ${headerTemplate}
-                            <p style="margin-bottom:4px;margin-top:50px;">Patient Name:</p>
-                            <input type="text" id="field1" class="form-control d-inline-block" style="width:100%;font-size:9pt;height:24px;padding:2px;" value="${patientName}">
-                            <p style="margin-bottom:2px;">Prescription:</p>
-                            <textarea id="field2" class="form-control d-inline-block" style="width:100%;font-size:9pt;height:80px;padding:4px;overflow-y:auto;resize:none;" rows="2"></textarea>
-                        </div>
-                        <div style="margin-left:auto;">${updatedFooterTemplate}</div>
-                    </div>
-                `,
-                        laboratory: `
-                    <div style="width:148mm;height:210mm;padding:10mm;font-family:Arial,sans-serif;font-size:9pt;box-sizing:border-box;line-height:1.3;display:flex;flex-direction:column;justify-content:space-between;">
-                        <div>
-                            ${headerTemplate}
-                            <p style="margin-top:40px;margin-bottom:4px;">Requested For:</p>
-                            <input type="text" id="field1" class="form-control d-inline-block" style="width:100%;font-size:9pt;height:24px;padding:2px;" value="${patientName}">
-                            <p style="margin-top:8px;margin-bottom:2px;">Tests:</p>
-                            <textarea id="field2" class="form-control d-inline-block" style="width:100%;font-size:9pt;height:80px;padding:4px;overflow-y:auto;resize:none;" rows="2"></textarea>
-                            <p style="margin-top:8px;margin-bottom:2px;">Purpose:</p>
-                            <textarea id="field3" class="form-control d-inline-block" style="width:100%;font-size:9pt;height:60px;padding:4px;overflow-y:auto;resize:none;" rows="2"></textarea>
-                        </div>
-                        <div style="margin-left:auto;">${updatedFooterTemplate}</div>
-                    </div>
-                `
+                prescription: `
+  <div style="width:148mm;height:210mm;padding:10mm;font-family:Arial,sans-serif;font-size:9pt;box-sizing:border-box;line-height:1.3;display:flex;flex-direction:column;justify-content:space-between;">
+      <div>
+          ${headerTemplate}
+          
+          <p style="margin-bottom:4px;margin-top:25px;"><strong>Prescription</strong></p>
+          <p>
+              Name:
+              <input type="text" id="field1" class="form-control d-inline-block" style="width:90px;font-size:9pt;height:24px;padding:2px;" value="${patientName}">
+              Age:
+              <input type="number" id="field2" class="form-control d-inline-block" style="width:45px;font-size:9pt;height:24px;padding:2px;">
+          </p>
+          <p>
+              Address:
+              <input type="text" id="field3" class="form-control d-inline-block" style="width:160px;font-size:9pt;height:24px;padding:2px;">
+          </p>
+          <p style="margin-bottom:2px;">Prescription Details:</p>
+          <textarea id="field4" class="form-control mb-2" style="font-size:9pt;height:80px;padding:4px;overflow-y:auto;resize:none;" rows="2"></textarea>
+      </div>
+      <div style="margin-left:auto;">${updatedFooterTemplate}</div>
+  </div>
+`,
+laboratory: `
+  <div style="width:148mm;height:210mm;padding:10mm;font-family:Arial,sans-serif;font-size:9pt;box-sizing:border-box;line-height:1.3;display:flex;flex-direction:column;justify-content:space-between;">
+      <div>
+          ${headerTemplate}
+          <p style="margin-bottom:4px;margin-top:25px;"><strong>Lab Request</strong></p>
+          <p>
+              Name:
+              <input type="text" id="field1" class="form-control d-inline-block" style="width:90px;font-size:9pt;height:24px;padding:2px;" value="${patientName}">
+              Age:
+              <input type="number" id="field2" class="form-control d-inline-block" style="width:45px;font-size:9pt;height:24px;padding:2px;">
+          </p>
+          <p>
+              Address:
+              <input type="text" id="field3" class="form-control d-inline-block" style="width:160px;font-size:9pt;height:24px;padding:2px;">
+          </p>
+          <p style="margin-top:8px;margin-bottom:2px;">Tests:</p>
+          <textarea id="field4" class="form-control mb-2" style="font-size:9pt;height:80px;padding:4px;overflow-y:auto;resize:none;" rows="2"></textarea>
+          <p style="margin-top:8px;margin-bottom:2px;">Purpose:</p>
+          <textarea id="field5" class="form-control mb-2" style="font-size:9pt;height:60px;padding:4px;overflow-y:auto;resize:none;" rows="2"></textarea>
+      </div>
+      <div style="margin-left:auto;">${updatedFooterTemplate}</div>
+  </div>
+`
                     };
 
                     document.getElementById("docModalBody").innerHTML = fieldsMap[type];
@@ -290,131 +310,146 @@
         }
 
         // ---------- printDoc: async and builds printable HTML including signature ----------
-        async function printDoc() {
-            if (!currentDocType) {
-                alert('Please select a document type first');
-                return;
-            }
+async function printDoc() {
+  if (!currentDocType) {
+    alert('Please select a document type first');
+    return;
+  }
 
-            // grab field values from modal (if any)
-            const fieldValues = {
-                field1: document.getElementById('field1')?.value || '',
-                field2: document.getElementById('field2')?.value || '',
-                field3: document.getElementById('field3')?.value || '',
-                field4: document.getElementById('field4')?.value || '',
-                field5: document.getElementById('field5')?.value || '',
-                field6: document.getElementById('field6')?.value || '',
-                field7: document.getElementById('field7')?.value || '',
-                // signature inputs inside modal (may exist)
-                field9: document.getElementById('field9')?.value || '',
-                field10: document.getElementById('field10')?.value || '',
-                field11: document.getElementById('field11')?.value || '',
-                field12: document.getElementById('field12')?.value || ''
-            };
+  // Open the window immediately to keep the user-activation
+  let w = window.open('', 'printWindow');
+  let useIframe = false;
+  if (!w) {
+    // Popup blocked → fallback to hidden iframe
+    useIframe = true;
+    const iframe = document.createElement('iframe');
+    iframe.style.position = 'fixed';
+    iframe.style.right = '0';
+    iframe.style.bottom = '0';
+    iframe.style.width = '0';
+    iframe.style.height = '0';
+    iframe.style.border = '0';
+    document.body.appendChild(iframe);
+    w = iframe.contentWindow;
+  } else {
+    // Minimal shell so the window is not blank while we fetch
+    w.document.open();
+    w.document.write('<!doctype html><html><head><title>Preparing…</title></head><body>Preparing…</body></html>');
+    w.document.close();
+  }
 
-            // fetch signature data from API
-            const sigData = await fetchSignatureData();
+  // Helpers (sync)
+  const e = (s) => (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;')
+                            .replace(/>/g,'&gt;').replace(/"/g,'&quot;')
+                            .replace(/'/g,'&#039;');
+  const get = (id) => document.getElementById(id)?.value?.trim() || '';
 
-            // prefer modal inputs if user typed them, otherwise fallback to DB values
-            const sig = {
-                lic_no: fieldValues.field9.trim() || (sigData.lic_no || ''),
-                ptr_no: fieldValues.field10.trim() || (sigData.ptr_no || ''),
-                tin_no: fieldValues.field11.trim() || (sigData.tin_no || ''),
-                s2_no: fieldValues.field12.trim() || (sigData.s2_no || '')
-            };
+  // Collect values from the modal
+  const v = {
+    f1: get('field1'),
+    f2: get('field2'),
+    f3: get('field3'),
+    f4: get('field4'),
+    f5: get('field5'),
+    f7: get('field7'),
+    lic: get('field9'),
+    ptr: get('field10'),
+    tin: get('field11'),
+    s2:  get('field12'),
+  };
 
-            const titleMap = {
-                certificate: "Medical Certificate",
-                prescription: "Prescription",
-                laboratory: "Lab Request"
-            };
+  // Fetch signature AFTER opening the window (keep it non-blocking)
+  let sigData = { lic_no: '', ptr_no: '', tin_no: '', s2_no: '' };
+  try { sigData = await fetchSignatureData(); } catch {}
+  const sig = {
+    lic_no: v.lic || (sigData.lic_no || ''),
+    ptr_no: v.ptr || (sigData.ptr_no || ''),
+    tin_no: v.tin || (sigData.tin_no || ''),
+    s2_no:  v.s2  || (sigData.s2_no  || ''),
+  };
 
-            let bodyContent = '';
-            if (currentDocType === "certificate") {
-                bodyContent = `
-          <p><strong>TO WHOM IT MAY CONCERN:</strong></p>
-          <p style="text-align:justify;">
-            This is to certify that Mr./Ms./Mrs. <strong>${escapeHtml(fieldValues.field1)}</strong>,
-            <strong>${escapeHtml(fieldValues.field2)}</strong> years old, <strong>${escapeHtml(fieldValues.field3)}</strong>,
-            and presently residing at <strong>${escapeHtml(fieldValues.field4)}</strong>,
-            consulted me at my clinic on <strong>${escapeHtml(fieldValues.field5)}</strong> and the following medical impression was/is given:
-          </p>
-          <p><strong>Medical Impression:</strong></p>
-          <p>${escapeHtml(fieldValues.field6)}</p>
-          <p><strong>Remarks:</strong></p>
-          <p>${escapeHtml(fieldValues.field7)}</p>
-          <p style="margin-top:10px;">This certificate is issued upon the request of the patient but is not valid for medico-legal purposes. Thank you.</p>
-        `;
-            } else if (currentDocType === "prescription") {
-                bodyContent = `
-          <p>Patient Name: <strong>${escapeHtml(fieldValues.field1)}</strong></p>
-          <p>Prescription:</p>
-          <p>${escapeHtml(fieldValues.field2)}</p>
-        `;
-            } else if (currentDocType === "laboratory") {
-                bodyContent = `
-          <p>Requested For: <strong>${escapeHtml(fieldValues.field1)}</strong></p>
-          <p>Tests:</p>
-          <p>${escapeHtml(fieldValues.field2)}</p>
-          <p>Purpose:</p>
-          <p>${escapeHtml(fieldValues.field3)}</p>
-        `;
-            }
+  const titleMap = {
+    certificate: "Medical Certificate",
+    prescription: "Prescription",
+    laboratory: "Lab Request",
+  };
 
-            const footerHTML = `
+  let bodyContent = '';
+  if (currentDocType === 'certificate') {
+    bodyContent = `
+      <p><strong>TO WHOM IT MAY CONCERN:</strong></p>
+      <p style="text-align:justify;">
+        This is to certify that Mr./Ms./Mrs. <strong>${e(v.f1)}</strong>,
+        <strong>${e(v.f2)}</strong> years old, <strong>${e(v.f3)}</strong>,
+        and presently residing at <strong>${e(v.f4)}</strong>,
+        consulted me at my clinic on <strong>${e(v.f5)}</strong> and the following medical impression was/is given:
+      </p>
+      <p><strong>Medical Impression:</strong></p>
+      <pre style="white-space: pre-wrap; margin:0;">${e(v.f7)}</pre>
+    `;
+  } else if (currentDocType === 'prescription') {
+    bodyContent = `
+      <p>Patient Name: <strong>${e(v.f1)}</strong></p>
+      <p>Prescription:</p>
+      <pre style="white-space: pre-wrap; margin:0;">${e(v.f2)}</pre>
+    `;
+  } else if (currentDocType === 'laboratory') {
+    bodyContent = `
+      <p>Requested For: <strong>${e(v.f1)}</strong></p>
+      <p>Tests:</p>
+      <pre style="white-space: pre-wrap; margin:0;">${e(v.f2)}</pre>
+      <p>Purpose:</p>
+      <pre style="white-space: pre-wrap; margin:0;">${e(v.f3)}</pre>
+    `;
+  }
+
+  const footerHTML = `
     <div style="display:flex;justify-content:flex-end;margin-top:40px;">
-        <div style="text-align:left;">
-            <p style="margin:2px 0;"><strong>Jules I. Cortes</strong></p>
-
-            <div style="display:flex; gap:6px;">
-                <p style="margin:0;">Lic. No:</p>
-                <span>${escapeHtml(sig.lic_no)}</span>
-            </div>
-
-            <div style="display:flex; gap:6px;">
-                <p style="margin:0;">PTR No:</p>
-                <span>${escapeHtml(sig.ptr_no)}</span>
-            </div>
-
-            <div style="display:flex; gap:6px;">
-                <p style="margin:0;">TIN No:</p>
-                <span>${escapeHtml(sig.tin_no)}</span>
-            </div>
-
-            <div style="display:flex; gap:6px;">
-                <p style="margin:0;">S2 No:</p>
-                <span>${escapeHtml(sig.s2_no)}</span>
-            </div>
-        </div>
+      <div style="text-align:left;">
+        <p style="margin:2px 0;"><strong>Jules I. Cortes</strong></p>
+        <div style="display:flex; gap:6px;"><p style="margin:0;">Lic. No:</p><span>${e(sig.lic_no)}</span></div>
+        <div style="display:flex; gap:6px;"><p style="margin:0;">PTR No:</p><span>${e(sig.ptr_no)}</span></div>
+        <div style="display:flex; gap:6px;"><p style="margin:0;">TIN No:</p><span>${e(sig.tin_no)}</span></div>
+        <div style="display:flex; gap:6px;"><p style="margin:0;">S2 No:</p><span>${e(sig.s2_no)}</span></div>
+      </div>
     </div>
-`;
+  `;
 
-
-            const content = `
-        <div style="width:148mm;height:210mm;padding:10mm;font-family:Arial,sans-serif;font-size:10pt;box-sizing:border-box;border:1px solid #000;line-height:1.4;display:flex;flex-direction:column;justify-content:space-between;">
+  const page = `
+    <!doctype html>
+    <html>
+      <head>
+        <meta charset="utf-8">
+        <title>${titleMap[currentDocType]}</title>
+        <style>
+          @page { size: A5 portrait; margin: 0; }
+          body { margin:0; padding:0; display:flex; align-items:center; justify-content:center; font-family:Arial,sans-serif; font-size:10pt; }
+        </style>
+      </head>
+      <body>
+        <div style="width:148mm;height:210mm;padding:10mm;box-sizing:border-box;border:1px solid #000;line-height:1.4;display:flex;flex-direction:column;justify-content:space-between;">
           ${headerTemplate}
           <div style="flex:1;margin-top:20px;">${bodyContent}</div>
           ${footerHTML}
         </div>
-      `;
+      </body>
+    </html>
+  `;
 
-            const printable = `
-        <html>
-          <head>
-            <title>${titleMap[currentDocType]}</title>
-            <style>
-              @page { size: A5 portrait; margin: 0; }
-              body { margin:0; padding:0; display:flex; align-items:center; justify-content:center; }
-            </style>
-          </head>
-          <body>${content}</body>
-        </html>
-      `;
-            document.body.innerHTML = printable;
-            window.print();
+  // Write and print (works for both popup window and iframe)
+  const doc = w.document;
+  doc.open();
+  doc.write(page);
+  doc.close();
 
-        }
-
+  // Wait a tick to ensure layout, then print
+  const doPrint = () => { w.focus(); w.print(); if (!useIframe) setTimeout(() => w.close(), 100); };
+  if ('requestAnimationFrame' in w) {
+    w.requestAnimationFrame(() => setTimeout(doPrint, 0));
+  } else {
+    setTimeout(doPrint, 50);
+  }
+}
         // small SVG / text escaping helper to avoid injecting raw HTML from inputs
         function escapeHtml(str) {
             if (!str) return '';
@@ -456,7 +491,7 @@
                         <div class="d-flex gap-2">
                             <button class="btn btn-sm btn-success"
                                 onclick='setupEditPatientModal({{ patient|tojson|safe }})'>Edit</button>
-                            <form method="post" action="/delete/{{ patient[0] }}"
+                            <form method="post" action="/delete/{{ patient['id'] }}"
                                 onsubmit="return confirm('Confirm delete?')">
                                 <button class="btn btn-sm btn-danger" type="submit">Delete</button>
                             </form>
@@ -486,29 +521,26 @@
                                 <label class="form-label fw-bold">City</label>
                                 <div class="form-control-plaintext">{{ patient['city'] }}</div>
                             </div>
-                            <div class="col-md-6">
-                                <label class="form-label fw-bold">Emergency Contact</label>
-                                <div class="form-control-plaintext">{{ patient['emergency_contact'] }}</div>
-                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Medical History Card -->
-                <div class="card mb-3 shadow-sm">
-                    <div class="card-header d-flex justify-content-between align-items-center bg-light">
-                        <strong class="mb-0">Medical History</strong>
-                        <button class="btn btn-sm btn-success" data-bs-toggle="modal"
-                            data-bs-target="#medicalHistoryModal">Edit</button>
-                    </div>
-                    <div class="card-body text-muted">
-                        {% if patient['medical_history'] %}
-                        {{ patient['medical_history'] }}
-                        {% else %}
-                        <span class="text-muted">No history recorded.</span>
-                        {% endif %}
-                    </div>
-                </div>
+<!-- Medical History Card -->
+<div class="card mb-3 shadow-sm">
+    <div class="card-header d-flex justify-content-between align-items-center bg-light">
+        <strong class="mb-0">Medical History</strong>
+        <button class="btn btn-sm btn-success" data-bs-toggle="modal"
+            data-bs-target="#medicalHistoryModal">Edit</button>
+    </div>
+    <div class="card-body">
+    {% if patient['medical_history'] %}
+        <pre class="mb-0" style="white-space: pre-wrap;">{{ patient['medical_history'] }}</pre>
+    {% else %}
+        <span class="text-muted">No history recorded.</span>
+    {% endif %}
+</div>
+</div>
+
             </div>
 
             <!-- Right Column -->
@@ -538,15 +570,13 @@
                                 <div class="d-flex gap-2">
                                     <button class="btn btn-sm btn-success"
                                         onclick="setupEditVisitModal({{ r[0] }})">Edit</button>
-                                    <form method="post" action="/delete_record/{{ r[0] }}"
-                                        onsubmit="return confirm('Delete this record?');">
-                                        <button class="btn btn-sm btn-danger" type="submit">Delete</button>
-                                    </form>
+                                        <form action="{{ url_for('delete_record', record_id=r['id']) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this visit?');">
+                                            <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                                        </form>                                    
                                 </div>
                             </div>
                             <div class="visit-notes small px-1 text-muted" id="notes-{{ r[0] }}"
-                                style="display: none; white-space: pre-wrap; margin: 0; line-height: 1.2; padding: 0;">
-                                {{ r[2] }}</div>
+                                style="display: none; white-space: pre-wrap; margin: 0; line-height: 1.2; padding: 0;">{{ r[2] }}</div>
                         </div>
                         {% endfor %}
                     </div>
@@ -600,10 +630,6 @@
                                 <label class="form-label">City</label>
                                 <input type="text" class="form-control" name="city" required>
                             </div>
-                            <div class="col-md-12">
-                                <label class="form-label">Emergency Contact</label>
-                                <input type="text" class="form-control" name="emergency_contact">
-                            </div>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -616,33 +642,30 @@
     </div>
     </div>
 
-
-    <!-- Medical History Modal -->
-    <div class="modal fade" id="medicalHistoryModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <form method="post" action="/edit_medical_history/{{ patient['id'] }}">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Edit Medical History</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+<!-- Medical History Modal -->
+<div class="modal fade" id="medicalHistoryModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form method="post" action="/edit_medical_history/{{ patient['id'] }}">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Medical History</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Medical History</label>
+                        <textarea name="medical_history" class="form-control"
+                            rows="10">{{ patient['medical_history'] or '' }}</textarea>
                     </div>
-                    <div class="modal-body">
-                        <input type="hidden" name="patient_id" value="{{ patient[0] }}">
-                        <div class="mb-3">
-                            <label class="form-label">Medical History</label>
-                            <textarea name="medical_history" class="form-control"
-                                rows="10">{{ patient[10] or '' }}</textarea>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary">Save</button>
-                    </div>
-                </form>
-            </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save</button>
+                </div>
+            </form>
         </div>
     </div>
-
+</div>
 
     <!-- Edit Visit Modal -->
     <div class="modal fade" id="visitModal" tabindex="-1">
@@ -712,7 +735,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-secondary" onclick="printDiv('docModalBody')">Print</button>
+                    <button type="button" class="btn btn-secondary" onclick="printDoc()">Print</button>
                 </div>
             </div>
         </div>
