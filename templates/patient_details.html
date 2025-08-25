@@ -235,7 +235,7 @@
           </p>
           <div style="margin:0">
           <p style="font-size:17px"><strong>Rx</strong></p>
-          <textarea id="field4" class="form-control mb-2" style="font-size:9pt;height:80px;padding:4px;overflow-y:auto;resize:none;" rows="2"></textarea>
+          <textarea id="field4" class="form-control mb-2" style="font-size:9pt;height:250px;padding:4px;overflow-y:auto;resize:none;" rows="2"></textarea>
       </div>
       </div>
       <div style="margin-left:auto;">${updatedFooterTemplate}</div>
@@ -256,9 +256,9 @@ laboratory: `
               <input type="text" id="field3" class="form-control d-inline-block" style="width:160px;font-size:9pt;height:24px;padding:2px;">
           </p>
           <p style="margin-top:8px;margin-bottom:2px;">Tests:</p>
-          <textarea id="field4" class="form-control mb-2" style="font-size:9pt;height:80px;padding:4px;overflow-y:auto;resize:none;" rows="2"></textarea>
+          <textarea id="field4" class="form-control mb-2" style="font-size:9pt;height:150px;padding:4px;overflow-y:auto;resize:none;" rows="2"></textarea>
           <p style="margin-top:8px;margin-bottom:2px;">Diagnosis:</p>
-          <textarea id="field5" class="form-control mb-2" style="font-size:9pt;height:60px;padding:4px;overflow-y:auto;resize:none;" rows="2"></textarea>
+          <textarea id="field5" class="form-control mb-2" style="font-size:9pt;height:150px;padding:4px;overflow-y:auto;resize:none;" rows="2"></textarea>
       </div>
       <div style="margin-left:auto;">${updatedFooterTemplate}</div>
   </div>
@@ -358,7 +358,7 @@ laboratory: `
         } else if (currentDocType === 'prescription') {
             bodyContent = `
             <p>
-            <span style="margin-right:40px;">Name: <strong>${e(v.f1)}</strong></span>
+            <span style="margin-right:100px;">Name: <strong>${e(v.f1)}</strong></span>
             <span>Age: <strong>${e(v.f2)}</strong></span>
             </p>
             <p>Address: <strong>${e(v.f3)}</strong></p>
@@ -399,7 +399,7 @@ laboratory: `
                 <title>${titleMap[currentDocType]}</title>
                 <style>
                 @page { size: A5 portrait; margin: 0; }
-                body { margin:0; padding:0; display:flex; align-items:center; justify-content:center; font-family:Arial,sans-serif; font-size:10pt; }
+                body { margin:0; padding:0; display:flex; align-items:center; justify-content:center; font-family:Arial,sans-serif; font-size:12pt; }
                 </style>
             </head>
             <body>

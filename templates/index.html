@@ -230,8 +230,8 @@
             <table class="table">
                 <thead>
                     <tr>
-                        <th>First Name</th>
                         <th>Last Name</th>
+                        <th>First Name</th>
                         <th>Age</th>
                         <th>Last Visit</th>
                     </tr>
@@ -239,8 +239,8 @@
                 <tbody>
                     {% for p in patients %}
                     <tr onclick='window.location="{{ url_for("view_patient", patient_id=p["id"]) }}"'>
-                        <td>{{ p['first_name'] }}</td>
                         <td>{{ p['last_name'] }}</td>
+                        <td>{{ p['first_name'] }}</td>
                         <td>{{ p['age'] }}</td>
                         <td>{{ p['last_visit']|format_date if p['last_visit'] else 'No visits' }}</td>
                     </tr>

@@ -9,11 +9,19 @@ def resource_path(relative_path):
         return os.path.join(sys._MEIPASS, relative_path)
     return os.path.join(os.path.abspath("."), relative_path)
 
+# Define folder and database path
+DB_FOLDER = os.path.join(os.environ['LOCALAPPDATA'], "Madjik")  # user-writable folder
+DB_PATH = os.path.join(DB_FOLDER, "patients.db")
+
+# Create folder if it doesn't exist
+os.makedirs(DB_FOLDER, exist_ok=True)
+
+
 app = Flask(__name__,
     template_folder=resource_path('templates'),
     static_folder=resource_path('static'))
 app.secret_key = 'secret_key_here'
-DB = 'patients.db'
+DB = DB_PATH
 
 def get_db():
     try:
