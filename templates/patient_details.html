@@ -148,44 +148,6 @@
     </div>
     `;
 
-        // footerTemplate is used in the modal view (prefilled by Jinja if available)
-        const footerTemplate = `
-        <div style="margin-left:auto;">
-            <div style="text-align:left;">
-                <p style="margin-bottom:2px;"><strong>Jules I. Cortes</strong></p>
-                
-                <div style="display:flex; align-items:center; gap:6px;">
-                    <p style="margin:0;">Lic. No:</p>
-                    <input type="text" id="field9" class="form-control" 
-                        style="width:90px;font-size:9pt;height:24px;padding:2px;"
-                        value="{{ signature_info['lic_no'] if signature_info else '' }}">
-                </div>
-
-                <div style="display:flex; align-items:center; gap:6px;">
-                    <p style="margin:0;">PTR No:</p>
-                    <input type="text" id="field10" class="form-control" 
-                        style="width:90px;font-size:9pt;height:24px;padding:2px;"
-                        value="{{ signature_info['ptr_no'] if signature_info else '' }}">
-                </div>
-
-                <div style="display:flex; align-items:center; gap:6px;">
-                    <p style="margin:0;">TIN No:</p>
-                    <input type="text" id="field11" class="form-control" 
-                        style="width:90px;font-size:9pt;height:24px;padding:2px;"
-                        value="{{ signature_info['tin_no'] if signature_info else '' }}">
-                </div>
-
-                <div style="display:flex; align-items:center; gap:6px;">
-                    <p style="margin:0;">S2 No:</p>
-                    <input type="text" id="field12" class="form-control" 
-                        style="width:90px;font-size:9pt;height:24px;padding:2px;"
-                    value="{{ signature_info['s2_no'] if signature_info else '' }}">
-                </div>
-
-            </div>
-        </div>
-        `;
-
         function openDocumentForm(type) {
             currentDocType = type;
             const patientData = JSON.parse('{{ patient|tojson|safe }}');
@@ -230,16 +192,16 @@
 
                     const fieldsMap = {
                         certificate: `
-                    <div style="width:148mm;height:210mm;padding:10mm;font-family:Arial,sans-serif;font-size:9pt;box-sizing:border-box;line-height:1.3;display:flex;flex-direction:column;justify-content:space-between;">
+                    <div style="width:148mm;height:210mm;padding:10mm;font-family:Arial,sans-serif;font-size:11pt;box-sizing:border-box;line-height:1.3;display:flex;flex-direction:column;justify-content:space-between;">
                         <div>
                             ${headerTemplate}
                             <p style="margin-bottom:4px;margin-top:25px;"><strong>TO WHOM IT MAY CONCERN:</strong></p>
                             <p style="text-align:justify;">
                                 This is to certify that Mr./Ms./Mrs.
                                 <input type="text" id="field1" class="form-control d-inline-block" style="width:90px;font-size:9pt;height:24px;padding:2px;" value="${patientName}">
-                                <input type="number" id="field2" class="form-control d-inline-block" style="width:45px;font-size:9pt;height:24px;padding:2px;"> years old,
-                                <select id="field3" class="form-select d-inline-block" style="width:85px;font-size:9pt;height:24px;padding:2px;">
-                                    <option>single</option><option>married</option><option>widowed</option><option>widower</option>
+                                <input type="text" id="field2" class="form-control d-inline-block" style="width:70px;font-size:9pt;height:24px;padding:2px;" placeholder="Age">,
+                                <select id="field3" class="form-select d-inline-block" style="width:80px;font-size:9pt;height:24px;padding:2px;">
+                                    <option>single</option><option>married</option><option>widowed</option><option>widower</option><option>child</option>
                                 </select>
                                 and presently residing at
                                 <input type="text" id="field4" class="form-control d-inline-block" style="width:160px;font-size:9pt;height:24px;padding:2px;" placeholder="Address">
@@ -249,17 +211,18 @@
                             </p>
                             <p style="margin-bottom:2px;"><strong>Medical Impression:</strong></p>
                             <textarea id="field7" class="form-control mb-2" style="font-size:9pt;height:80px;padding:4px;overflow-y:auto;resize:none;" rows="2"></textarea>
+                            <p style="margin-bottom:2px;"><strong>Recommendation:</strong></p>
+                            <textarea id="field8" class="form-control mb-2" style="font-size:9pt;height:80px;padding:4px;overflow-y:auto;resize:none;" rows="2"></textarea>
                             <p style="margin-top:10px;">This certificate is issued upon the request of the patient but is not valid for medico-legal purposes. Thank you.</p>
                         </div>
                         <div style="margin-left:auto;">${updatedFooterTemplate}</div>
                     </div>
                 `,
                 prescription: `
-  <div style="width:148mm;height:210mm;padding:10mm;font-family:Arial,sans-serif;font-size:9pt;box-sizing:border-box;line-height:1.3;display:flex;flex-direction:column;justify-content:space-between;">
+  <div style="width:148mm;height:210mm;padding:10mm;font-family:Arial,sans-serif;font-size:11pt;box-sizing:border-box;line-height:1.3;display:flex;flex-direction:column;justify-content:space-between;">
       <div>
           ${headerTemplate}
           
-          <p style="margin-bottom:4px;margin-top:25px;"><strong>Prescription</strong></p>
           <p>
               Name:
               <input type="text" id="field1" class="form-control d-inline-block" style="width:90px;font-size:9pt;height:24px;padding:2px;" value="${patientName}">
@@ -270,17 +233,18 @@
               Address:
               <input type="text" id="field3" class="form-control d-inline-block" style="width:160px;font-size:9pt;height:24px;padding:2px;">
           </p>
-          <p style="margin-bottom:2px;">Prescription Details:</p>
+          <div style="margin:0">
+          <p style="font-size:17px"><strong>Rx</strong></p>
           <textarea id="field4" class="form-control mb-2" style="font-size:9pt;height:80px;padding:4px;overflow-y:auto;resize:none;" rows="2"></textarea>
+      </div>
       </div>
       <div style="margin-left:auto;">${updatedFooterTemplate}</div>
   </div>
 `,
 laboratory: `
-  <div style="width:148mm;height:210mm;padding:10mm;font-family:Arial,sans-serif;font-size:9pt;box-sizing:border-box;line-height:1.3;display:flex;flex-direction:column;justify-content:space-between;">
+  <div style="width:148mm;height:210mm;padding:10mm;font-family:Arial,sans-serif;font-size:11pt;box-sizing:border-box;line-height:1.3;display:flex;flex-direction:column;justify-content:space-between;">
       <div>
           ${headerTemplate}
-          <p style="margin-bottom:4px;margin-top:25px;"><strong>Lab Request</strong></p>
           <p>
               Name:
               <input type="text" id="field1" class="form-control d-inline-block" style="width:90px;font-size:9pt;height:24px;padding:2px;" value="${patientName}">
@@ -293,7 +257,7 @@ laboratory: `
           </p>
           <p style="margin-top:8px;margin-bottom:2px;">Tests:</p>
           <textarea id="field4" class="form-control mb-2" style="font-size:9pt;height:80px;padding:4px;overflow-y:auto;resize:none;" rows="2"></textarea>
-          <p style="margin-top:8px;margin-bottom:2px;">Purpose:</p>
+          <p style="margin-top:8px;margin-bottom:2px;">Diagnosis:</p>
           <textarea id="field5" class="form-control mb-2" style="font-size:9pt;height:60px;padding:4px;overflow-y:auto;resize:none;" rows="2"></textarea>
       </div>
       <div style="margin-left:auto;">${updatedFooterTemplate}</div>
@@ -310,146 +274,158 @@ laboratory: `
         }
 
         // ---------- printDoc: async and builds printable HTML including signature ----------
-async function printDoc() {
-  if (!currentDocType) {
-    alert('Please select a document type first');
-    return;
-  }
+        async function printDoc() {
+        if (!currentDocType) {
+            alert('Please select a document type first');
+            return;
+        }
 
-  // Open the window immediately to keep the user-activation
-  let w = window.open('', 'printWindow');
-  let useIframe = false;
-  if (!w) {
-    // Popup blocked → fallback to hidden iframe
-    useIframe = true;
-    const iframe = document.createElement('iframe');
-    iframe.style.position = 'fixed';
-    iframe.style.right = '0';
-    iframe.style.bottom = '0';
-    iframe.style.width = '0';
-    iframe.style.height = '0';
-    iframe.style.border = '0';
-    document.body.appendChild(iframe);
-    w = iframe.contentWindow;
-  } else {
-    // Minimal shell so the window is not blank while we fetch
-    w.document.open();
-    w.document.write('<!doctype html><html><head><title>Preparing…</title></head><body>Preparing…</body></html>');
-    w.document.close();
-  }
+        // Open the window immediately to keep the user-activation
+        let w = window.open('', 'printWindow');
+        let useIframe = false;
+        if (!w) {
+            // Popup blocked → fallback to hidden iframe
+            useIframe = true;
+            const iframe = document.createElement('iframe');
+            iframe.style.position = 'fixed';
+            iframe.style.right = '0';
+            iframe.style.bottom = '0';
+            iframe.style.width = '0';
+            iframe.style.height = '0';
+            iframe.style.border = '0';
+            document.body.appendChild(iframe);
+            w = iframe.contentWindow;
+        } else {
+            // Minimal shell so the window is not blank while we fetch
+            w.document.open();
+            w.document.write('<!doctype html><html><head><title>Preparing…</title></head><body>Preparing…</body></html>');
+            w.document.close();
+        }
 
-  // Helpers (sync)
-  const e = (s) => (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;')
-                            .replace(/>/g,'&gt;').replace(/"/g,'&quot;')
-                            .replace(/'/g,'&#039;');
-  const get = (id) => document.getElementById(id)?.value?.trim() || '';
+        // Helpers (sync)
+        const e = (s) => (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;')
+                                    .replace(/>/g,'&gt;').replace(/"/g,'&quot;')
+                                    .replace(/'/g,'&#039;');
+        const get = (id) => document.getElementById(id)?.value?.trim() || '';
 
-  // Collect values from the modal
-  const v = {
-    f1: get('field1'),
-    f2: get('field2'),
-    f3: get('field3'),
-    f4: get('field4'),
-    f5: get('field5'),
-    f7: get('field7'),
-    lic: get('field9'),
-    ptr: get('field10'),
-    tin: get('field11'),
-    s2:  get('field12'),
-  };
+        // Collect values from the modal
+        const v = {
+            f1: get('field1'),
+            f2: get('field2'),
+            f3: get('field3'),
+            f4: get('field4'),
+            f5: get('field5'),
+            f7: get('field7'),
+            f8: get('field8'),
+            lic: get('field9'),
+            ptr: get('field10'),
+            tin: get('field11'),
+            s2:  get('field12'),
+        };
 
-  // Fetch signature AFTER opening the window (keep it non-blocking)
-  let sigData = { lic_no: '', ptr_no: '', tin_no: '', s2_no: '' };
-  try { sigData = await fetchSignatureData(); } catch {}
-  const sig = {
-    lic_no: v.lic || (sigData.lic_no || ''),
-    ptr_no: v.ptr || (sigData.ptr_no || ''),
-    tin_no: v.tin || (sigData.tin_no || ''),
-    s2_no:  v.s2  || (sigData.s2_no  || ''),
-  };
+        // Fetch signature AFTER opening the window (keep it non-blocking)
+        let sigData = { lic_no: '', ptr_no: '', tin_no: '', s2_no: '' };
+        try { sigData = await fetchSignatureData(); } catch {}
+        const sig = {
+            lic_no: v.lic || (sigData.lic_no || ''),
+            ptr_no: v.ptr || (sigData.ptr_no || ''),
+            tin_no: v.tin || (sigData.tin_no || ''),
+            s2_no:  v.s2  || (sigData.s2_no  || ''),
+        };
 
-  const titleMap = {
-    certificate: "Medical Certificate",
-    prescription: "Prescription",
-    laboratory: "Lab Request",
-  };
+        const titleMap = {
+            certificate: "Medical Certificate",
+            prescription: "Prescription",
+            laboratory: "Lab Request",
+        };
 
-  let bodyContent = '';
-  if (currentDocType === 'certificate') {
-    bodyContent = `
-      <p><strong>TO WHOM IT MAY CONCERN:</strong></p>
-      <p style="text-align:justify;">
-        This is to certify that Mr./Ms./Mrs. <strong>${e(v.f1)}</strong>,
-        <strong>${e(v.f2)}</strong> years old, <strong>${e(v.f3)}</strong>,
-        and presently residing at <strong>${e(v.f4)}</strong>,
-        consulted me at my clinic on <strong>${e(v.f5)}</strong> and the following medical impression was/is given:
-      </p>
-      <p><strong>Medical Impression:</strong></p>
-      <pre style="white-space: pre-wrap; margin:0;">${e(v.f7)}</pre>
-    `;
-  } else if (currentDocType === 'prescription') {
-    bodyContent = `
-      <p>Patient Name: <strong>${e(v.f1)}</strong></p>
-      <p>Prescription:</p>
-      <pre style="white-space: pre-wrap; margin:0;">${e(v.f2)}</pre>
-    `;
-  } else if (currentDocType === 'laboratory') {
-    bodyContent = `
-      <p>Requested For: <strong>${e(v.f1)}</strong></p>
-      <p>Tests:</p>
-      <pre style="white-space: pre-wrap; margin:0;">${e(v.f2)}</pre>
-      <p>Purpose:</p>
-      <pre style="white-space: pre-wrap; margin:0;">${e(v.f3)}</pre>
-    `;
-  }
+        let bodyContent = '';
+        if (currentDocType === 'certificate') {
+            bodyContent = `
+            <p><strong>TO WHOM IT MAY CONCERN:</strong></p>
+            <p style="text-align:justify;">
+                This is to certify that Mr./Ms./Mrs. <strong>${e(v.f1)}</strong>,
+                <strong>${e(v.f2)}</strong>, <strong>${e(v.f3)}</strong>,
+                and presently residing at <strong>${e(v.f4)}</strong>,
+                consulted me at my clinic on <strong>${e(v.f5)}</strong> and the following medical impression was/is given:
+            </p>
+            <p><strong>Medical Impression:</strong></p>
+            <pre style="white-space: pre-wrap; margin:0;">${e(v.f7)}</pre>
+            <p><strong>Recommendation:</strong></p>
+            <pre style="white-space: pre-wrap; margin:0;">${e(v.f8)}</pre>
+            <p style="margin-top:10px;">This certificate is issued upon the request of the patient but is not valid for medico-legal purposes. Thank you.</p>
+            `;
+        } else if (currentDocType === 'prescription') {
+            bodyContent = `
+            <p>
+            <span style="margin-right:40px;">Name: <strong>${e(v.f1)}</strong></span>
+            <span>Age: <strong>${e(v.f2)}</strong></span>
+            </p>
+            <p>Address: <strong>${e(v.f3)}</strong></p>
+            <p style="font-size:17px"><strong>Rx</strong></p>
+            <pre style="white-space: pre-wrap; margin:0;">${e(v.f4)}</pre>
+            `;
+        } else if (currentDocType === 'laboratory') {
+            bodyContent = `
+            <p>
+            <span style="margin-right:40px;">Name: <strong>${e(v.f1)}</strong></span>
+            <span>Age: <strong>${e(v.f2)}</strong></span>
+            </p>
+            <p>Address: <strong>${e(v.f3)}</strong></p>
+            <p>Tests:</p>
+            <pre style="white-space: pre-wrap; margin:0;">${e(v.f4)}</pre>
+            <p>Diagnosis:</p>
+            <pre style="white-space: pre-wrap; margin:0;">${e(v.f5)}</pre>
+            `;
+        }
 
-  const footerHTML = `
-    <div style="display:flex;justify-content:flex-end;margin-top:40px;">
-      <div style="text-align:left;">
-        <p style="margin:2px 0;"><strong>Jules I. Cortes</strong></p>
-        <div style="display:flex; gap:6px;"><p style="margin:0;">Lic. No:</p><span>${e(sig.lic_no)}</span></div>
-        <div style="display:flex; gap:6px;"><p style="margin:0;">PTR No:</p><span>${e(sig.ptr_no)}</span></div>
-        <div style="display:flex; gap:6px;"><p style="margin:0;">TIN No:</p><span>${e(sig.tin_no)}</span></div>
-        <div style="display:flex; gap:6px;"><p style="margin:0;">S2 No:</p><span>${e(sig.s2_no)}</span></div>
-      </div>
-    </div>
-  `;
+        const footerHTML = `
+            <div style="display:flex;justify-content:flex-end;margin-top:40px;">
+            <div style="text-align:left;">
+                <p style="margin:2px 0;"><strong>Jules I. Cortes</strong></p>
+                <div style="display:flex; gap:6px;"><p style="margin:0;">Lic. No:</p><span>${e(sig.lic_no)}</span></div>
+                <div style="display:flex; gap:6px;"><p style="margin:0;">PTR No:</p><span>${e(sig.ptr_no)}</span></div>
+                <div style="display:flex; gap:6px;"><p style="margin:0;">TIN No:</p><span>${e(sig.tin_no)}</span></div>
+                <div style="display:flex; gap:6px;"><p style="margin:0;">S2 No:</p><span>${e(sig.s2_no)}</span></div>
+            </div>
+            </div>
+        `;
 
-  const page = `
-    <!doctype html>
-    <html>
-      <head>
-        <meta charset="utf-8">
-        <title>${titleMap[currentDocType]}</title>
-        <style>
-          @page { size: A5 portrait; margin: 0; }
-          body { margin:0; padding:0; display:flex; align-items:center; justify-content:center; font-family:Arial,sans-serif; font-size:10pt; }
-        </style>
-      </head>
-      <body>
-        <div style="width:148mm;height:210mm;padding:10mm;box-sizing:border-box;border:1px solid #000;line-height:1.4;display:flex;flex-direction:column;justify-content:space-between;">
-          ${headerTemplate}
-          <div style="flex:1;margin-top:20px;">${bodyContent}</div>
-          ${footerHTML}
-        </div>
-      </body>
-    </html>
-  `;
+        const page = `
+            <!doctype html>
+            <html>
+            <head>
+                <meta charset="utf-8">
+                <title>${titleMap[currentDocType]}</title>
+                <style>
+                @page { size: A5 portrait; margin: 0; }
+                body { margin:0; padding:0; display:flex; align-items:center; justify-content:center; font-family:Arial,sans-serif; font-size:10pt; }
+                </style>
+            </head>
+            <body>
+                <div style="width:148mm;height:210mm;padding:10mm;box-sizing:border-box;border:1px solid #000;line-height:1.4;display:flex;flex-direction:column;justify-content:space-between;">
+                ${headerTemplate}
+                <div style="flex:1;margin-top:20px;">${bodyContent}</div>
+                ${footerHTML}
+                </div>
+            </body>
+            </html>
+        `;
 
-  // Write and print (works for both popup window and iframe)
-  const doc = w.document;
-  doc.open();
-  doc.write(page);
-  doc.close();
+        // Write and print (works for both popup window and iframe)
+        const doc = w.document;
+        doc.open();
+        doc.write(page);
+        doc.close();
 
-  // Wait a tick to ensure layout, then print
-  const doPrint = () => { w.focus(); w.print(); if (!useIframe) setTimeout(() => w.close(), 100); };
-  if ('requestAnimationFrame' in w) {
-    w.requestAnimationFrame(() => setTimeout(doPrint, 0));
-  } else {
-    setTimeout(doPrint, 50);
-  }
-}
+        // Wait a tick to ensure layout, then print
+        const doPrint = () => { w.focus(); w.print(); if (!useIframe) setTimeout(() => w.close(), 100); };
+        if ('requestAnimationFrame' in w) {
+            w.requestAnimationFrame(() => setTimeout(doPrint, 0));
+        } else {
+            setTimeout(doPrint, 50);
+        }
+        }
         // small SVG / text escaping helper to avoid injecting raw HTML from inputs
         function escapeHtml(str) {
             if (!str) return '';
