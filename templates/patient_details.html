@@ -141,7 +141,6 @@
         <p style="font-size:16pt;font-family:'Times New Roman'; margin-bottom:0;"><strong>JULES I. CORTES, M.D.</strong></p>
         <p style="font-size:11pt; margin:0;"><strong>FAMILY MEDICINE</strong></p>
         <p style="margin:0;">Sitio Carnation, Casili, Consolacion</p>
-        <p style="margin-top:0;">(across Grand Terrace Heights Subd.)<br> Mondays–Saturdays: 7:30pm–9:00pm</p>
       </div>
         <div style="text-align:right; margin-top:8px; font-size:10pt;">
         <strong>Date: <span id="docDate">${new Date().toLocaleDateString('en-PH', { year:'numeric', month:'long', day:'numeric' })}</span></strong>
@@ -165,7 +164,7 @@
                     const updatedFooterTemplate = `
                 <div style="margin-left:auto;">
                     <div style="text-align:left;">
-                        <p style="margin-bottom:2px;"><strong>Jules I. Cortes</strong></p>
+                        <p style="margin-bottom:2px;"><strong>Jules I. Cortes, M.D.</strong></p>
                         <p style="margin-bottom:2px;">Lic. No:
                             <input type="text" id="field9" class="form-control d-inline-block" 
                                 style="width:90px;font-size:9pt;height:24px;padding:2px;"
@@ -234,7 +233,7 @@
               <input type="text" id="field3" class="form-control d-inline-block" style="width:160px;font-size:9pt;height:24px;padding:2px;">
           </p>
           <div style="margin:0">
-          <p style="font-size:17px"><strong>Rx</strong></p>
+          <img src="/static/Rx.png" alt="Rx" style="width:70px; height:auto; display:block; margin-bottom:4px;">
           <textarea id="field4" class="form-control mb-2" style="font-size:9pt;height:250px;padding:4px;overflow-y:auto;resize:none;" rows="2"></textarea>
       </div>
       </div>
@@ -382,7 +381,7 @@ laboratory: `
         const footerHTML = `
             <div style="display:flex;justify-content:flex-end;margin-top:40px;">
             <div style="text-align:left;">
-                <p style="margin:2px 0;"><strong>Jules I. Cortes</strong></p>
+                <p style="margin:2px 0;"><strong>Jules I. Cortes, M.D.</strong></p>
                 <div style="display:flex; gap:6px;"><p style="margin:0;">Lic. No:</p><span>${e(sig.lic_no)}</span></div>
                 <div style="display:flex; gap:6px;"><p style="margin:0;">PTR No:</p><span>${e(sig.ptr_no)}</span></div>
                 <div style="display:flex; gap:6px;"><p style="margin:0;">TIN No:</p><span>${e(sig.tin_no)}</span></div>
